@@ -1,0 +1,47 @@
+.tooltip {
+    min-width: 100px;       /* Largeur minimum */
+    height: auto;           /* Hauteur qui s'adapte au texte */
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #00f2ff !important;
+    padding: 10px;
+    border: 1px solid #00f2ff;
+    border-radius: 5px;
+    pointer-events: none;   /* TRÈS IMPORTANT : empêche le carré de clignoter */
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+    font-family: 'Arial', sans-serif;
+    z-index: 1000;          /* Pour être sûr qu'il passe au-dessus de la carte */
+}
+
+.legend-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid #00f2ff44;
+    padding: 12px;
+    border-radius: 8px;
+    color: #00f2ff;
+    font-family: monospace;
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.legend-gradient {
+    width: 150px;
+    height: 10px;
+    background: linear-gradient(to right, #440154, #3b528b, #21918c, #5ec962, #fde725);
+    border-radius: 2px;
+    margin-bottom: 5px;
+}
+.legend-labels {
+    display: flex;
+    justify-content: space-between;
+}
+.route-option {
+    transition: background 0.2s;
+    padding: 8px;
+    border-radius: 4px;
+}
+.route-option:hover {
+    background: rgba(0, 242, 255, 0.05);
+}
