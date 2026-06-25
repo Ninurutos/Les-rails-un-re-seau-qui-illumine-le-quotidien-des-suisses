@@ -48,7 +48,7 @@ const labels = legend.append("div")
 labels.append("span").text("Faible");
 labels.append("span").text("Intense");
 
-// panneau de recherche
+// panneau de recherche 
 const panel = d3.select("body").append("div")
     .attr("id", "search-panel")
     .style("position", "fixed")
@@ -119,7 +119,7 @@ const resultBox = panel.append("div")
     .style("margin-top", "15px")
     .style("font-size", "11px");
 
-// projection et fonctions utilitaires
+// projections et fonctions utilitaires
 const projection = d3.geoMercator()
     .center([8.2275, 46.8])
     .scale(13000)
@@ -199,7 +199,6 @@ Promise.all([
     const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, 45]);
 
     const mapGroup = svg.append("g").attr("class", "map-group");
-
     const backgroundGroup = mapGroup.append("g").attr("class", "background-group");
     const railGroup = mapGroup.append("g").attr("class", "rail-group");
     const highlightGroup = mapGroup.append("g").attr("class", "highlight-group");
@@ -213,7 +212,7 @@ Promise.all([
 
     svg.call(zoom);
 
-    // Optionnel : surface invisible pour capter le drag/zoom partout
+    // Surface invisible pour capter le drag/zoom partout
     svg.append("rect")
         .attr("class", "zoom-catcher")
         .attr("width", width)

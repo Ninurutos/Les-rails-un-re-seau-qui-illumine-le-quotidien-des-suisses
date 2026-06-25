@@ -21,7 +21,6 @@ def time_to_minutes(t):
 
 def generate_rail_data():
 
-    # ROUTES 
     routes = pd.read_csv(os.path.join(data_path, 'routes.txt'))
     train_routes = routes[routes['route_type'].isin([117, 109, 106, 103, 900, 102, 100, 400, 700 ])]
     train_routes = train_routes.dropna(subset=['route_short_name'])
