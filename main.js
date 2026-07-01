@@ -134,10 +134,11 @@ function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
+    // ajustement de la formule de Haversine pour calculer la distance entre deux points géographiques (aide IA générative)
     const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
-
+// Cette fonction et la suivante ont été optimisées par IA générative
 function normCity(str) {
     return str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9 ]/g, "").trim() : "";
 }
@@ -202,6 +203,8 @@ Promise.all([
     const backgroundGroup = mapGroup.append("g").attr("class", "background-group");
     const railGroup = mapGroup.append("g").attr("class", "rail-group");
     const highlightGroup = mapGroup.append("g").attr("class", "highlight-group");
+    let isSearchActive = false;
+    let highlightedFeatureIds = new Set();
 
     // Zoom + drag sur l'ensemble de la carte
     const zoom = d3.zoom()
@@ -265,11 +268,12 @@ Promise.all([
     });
 
     // Recherche d’itinéraires entre une ville de départ et une ville d’arrivée
+    // Fonction réalisée à l'aide d'IA générative
     function findRoutes(orig, dest) {
         const results = [];
         const MAX_DIST = 1.5;
 
-        // 1) Recherche d’itinéraires directs
+        // Recherche d’itinéraires directs
         data.features.forEach(f => {
             const sd = f.properties.stops_data || [];
             const oIdx = sd.findIndex(s => cityMatches(normCity(s.name), orig));
@@ -362,19 +366,24 @@ Promise.all([
 
     // Gestion du survol sur les lignes invisibles mais interactives
     hoverLines
-        .on("mouseenter", function(event, d) {
-            railLines.attr("opacity", 0.12);
-            d3.select(this).attr("stroke", "rgba(0,0,0,0)");
-            showTooltip(event, d);
-        })
-        .on("mousemove", function(event, d) {
-            moveTooltip(event);
-        })
-        .on("mouseleave", function() {
+    .on("mouseenter", function(event, d) {
+        if (isSearchActive && !highlightedFeatureIds.has(d.properties.route_id)) return;
+
+        if (!isSearchActive) {
             railLines.attr("opacity", 0.4);
-            hideTooltip();
-        });
-    
+        }
+
+        d3.select(this).attr("stroke", "rgba(0,0,0,0)");
+        showTooltip(event, d);
+    })
+    .on("mousemove", function(event, d) {
+        if (isSearchActive && !highlightedFeatureIds.has(d.properties.route_id)) return;
+        moveTooltip(event);
+    })
+    .on("mouseleave", function(d) {
+        hideTooltip();
+    })
+
     function resetZoom() {
         svg.transition().duration(300).call(zoom.transform, d3.zoomIdentity);
     }
@@ -385,32 +394,53 @@ Promise.all([
         if (!orig || !dest) return;
 
         const routes = findRoutes(orig, dest);
+        isSearchActive = true;
+        highlightedFeatureIds = new Set(routes.flatMap(route =>
+        route.segments.map(seg => seg.feature.properties.route_id)
+        ));
         highlightGroup.selectAll("*").remove();
-        railLines.attr("opacity", 0.05);
+        railLines
+        .attr("opacity", d => highlightedFeatureIds.has(d.properties.route_id) ? 0.35 : 0.1)
+        hoverLines
+        .attr("stroke-width", 12)
+        .style("pointer-events", "stroke");
         // Affiche les résultats textuels
         resultBox.html(buildResultHTML(routes));
 
         if (routes.length > 0) {
             routes.forEach((route, rIdx) => {
                 const color = ROUTE_COLORS[rIdx] || "#fff";
+                const mainOpacity = rIdx === 0 ? 0.95 : 0.6;
+                const mainWidth = rIdx === 0 ? 5.2 : 4.2;
                 route.segments.forEach(seg => {
                     const sd = seg.feature.properties.stops_data;
                     const points = sd.slice(seg.oIdx, seg.dIdx + 1).map(s => projection([s.lon, s.lat]));
                     const lineGen = d3.line();
-                    // Dessin d’une couche sombre derrière le trajet pour créer un halo
-                    highlightGroup.append("path")
-                        .attr("d", lineGen(points))
-                        .attr("fill", "none")
-                        .attr("stroke", "#000")
-                        .attr("stroke-width", rIdx === 0 ? 6 : 4)
-                        .attr("opacity", 0.4);
+                    const pathD = lineGen(points);
 
                     highlightGroup.append("path")
-                        .attr("d", lineGen(points))
-                        .attr("fill", "none")
-                        .attr("stroke", color)
-                        .attr("stroke-width", rIdx === 0 ? 3 : 2)
-                        .style("filter", rIdx === 0 ? "drop-shadow(0 0 5px " + color + ")" : "none");
+                    .attr("d", pathD)
+                    .attr("fill", "none")
+                    .attr("stroke", "transparent")
+                    .attr("stroke-width", 16)
+                    .style("pointer-events", "stroke")
+                    .on("mouseenter", function(event) {
+                        showTooltip(event, seg.feature);
+                    })
+                    .on("mousemove", function(event) {
+                        moveTooltip(event);
+                    })
+                    .on("mouseleave", function() {
+                        hideTooltip();
+                    });
+
+                    highlightGroup.append("path")
+                    .attr("d", pathD)
+                    .attr("fill", "none")
+                    .attr("stroke", color)
+                    .attr("stroke-width", mainWidth)
+                    .attr("opacity", mainOpacity)
+                    .style("pointer-events", "none");
                 });
             });
             resetBtn.style("display", "block");
@@ -421,6 +451,12 @@ Promise.all([
 
     // Réinitialise l’affichage
     resetBtn.on("click", () => {
+        isSearchActive = false;
+        highlightedFeatureIds = new Set();
+        railLines
+        .attr("opacity", 0.4)
+        .style("pointer-events", "stroke");
+        hideTooltip();
         highlightGroup.selectAll("*").remove();
         railLines.attr("opacity", 0.4);
         resultBox.html("");

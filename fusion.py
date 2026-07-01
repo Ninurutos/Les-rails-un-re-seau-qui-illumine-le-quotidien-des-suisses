@@ -19,6 +19,7 @@ def time_to_minutes(t):
     except:
         return None
 
+# fonction améliorée et optimisée à l'aide d'IA générative
 def generate_rail_data():
 
     routes = pd.read_csv(os.path.join(data_path, 'routes.txt'))
