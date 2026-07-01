@@ -400,7 +400,7 @@ Promise.all([
         ));
         highlightGroup.selectAll("*").remove();
         railLines
-        .attr("opacity", d => highlightedFeatureIds.has(d.properties.route_id) ? 0.35 : 0.1)
+        .attr("opacity", d => highlightedFeatureIds.has(d.properties.route_id) ? 0.25 : 0.1)
         hoverLines
         .attr("stroke-width", 12)
         .style("pointer-events", "stroke");
@@ -410,8 +410,8 @@ Promise.all([
         if (routes.length > 0) {
             routes.forEach((route, rIdx) => {
                 const color = ROUTE_COLORS[rIdx] || "#fff";
-                const mainOpacity = rIdx === 0 ? 0.95 : 0.6;
-                const mainWidth = rIdx === 0 ? 5.2 : 4.2;
+                const mainOpacity = rIdx === 0 ? 0.72 : rIdx === 1 ? 0.82 : 0.6;
+                const mainWidth = rIdx === 0 ? 5.0 : rIdx === 1 ? 6.0 : 4.0;
                 route.segments.forEach(seg => {
                     const sd = seg.feature.properties.stops_data;
                     const points = sd.slice(seg.oIdx, seg.dIdx + 1).map(s => projection([s.lon, s.lat]));
@@ -422,7 +422,7 @@ Promise.all([
                     .attr("d", pathD)
                     .attr("fill", "none")
                     .attr("stroke", "transparent")
-                    .attr("stroke-width", 16)
+                    .attr("stroke-width", 14)
                     .style("pointer-events", "stroke")
                     .on("mouseenter", function(event) {
                         showTooltip(event, seg.feature);
